@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from datetime import datetime
 
+# Set the style for a dark background
+plt.style.use('dark_background')
+
 # Load the lidao data from the CSV file
 lidao_data = pd.read_csv('2024-Lidao.csv', parse_dates=['date'], index_col='date')
 
@@ -19,27 +22,26 @@ combined_data = combined_data.join(lidao_data, how='inner')  # Inner join to ens
 fig, ax1 = plt.subplots(figsize=(10, 6))
 
 # First axis for QQQ
-color = 'tab:blue'
 ax1.set_xlabel('Date')
-ax1.set_ylabel('QQQ Close', color=color)
-ax1.plot(combined_data.index, combined_data['QQQ Close'], label='QQQ Close', color=color, marker='o', linestyle='-')
-ax1.tick_params(axis='y', labelcolor=color)
+ax1.set_ylabel('QQQ Close', color='cyan')
+ax1.plot(combined_data.index, combined_data['QQQ Close'], label='QQQ Close', color='cyan', marker='*', linestyle='-', markersize=8)
+ax1.tick_params(axis='y', labelcolor='cyan')
 
 # Second axis for lidao data
 ax2 = ax1.twinx()
-color = 'tab:red'
-ax2.set_ylabel('Lidao Indices', color=color)
-ax2.plot(combined_data.index, combined_data['lidao-1.0'], label='Lidao-1.0', color='red', marker='o', linestyle='-')
-ax2.plot(combined_data.index, combined_data['lidao-SPX'], label='Lidao-SPX', color='green', marker='o', linestyle='-')
-ax2.plot(combined_data.index, combined_data['lidao-NASDAQ'], label='Lidao-NASDAQ', color='yellow', marker='o', linestyle='-')
-ax2.tick_params(axis='y', labelcolor=color)
+ax2.set_ylabel('Lidao Indices', color='magenta')
+ax2.plot(combined_data.index, combined_data['lidao-1.0'], label='Lidao-1.0', color='magenta', marker='s', linestyle='-', markersize=6)
+ax2.plot(combined_data.index, combined_data['lidao-SPX'], label='Lidao-SPX', color='lime', marker='^', linestyle='-', markersize=6)
+ax2.plot(combined_data.index, combined_data['lidao-NASDAQ'], label='Lidao-NASDAQ', color='yellow', marker='D', linestyle='-', markersize=6)
+ax2.tick_params(axis='y', labelcolor='magenta')
 
-fig.tight_layout()
-plt.title('QQQ Close and Lidao Indices')
+# Adjust layout to make space for title
+fig.tight_layout(rect=[0, 0, 1, 0.95])  # Adjust the rectangle in which the plot fits (left, bottom, right, top)
 fig.legend(loc='upper left', bbox_to_anchor=(0.1,0.9))
+plt.title('QQQ Close and Lidao Indices on Dark Background', fontsize=16, color='white')
 
 # Save the plot to a file with the current date as the filename
-filename = datetime.now().strftime('%Y-%m-%d') + '_QQQ_and_Lidao_Indices.png'
+filename = datetime.now().strftime('%Y-%m-%d') + '_QQQ_and_Lidao_Indices_Dark.png'
 plt.savefig(filename)
 
 # Display the plot
