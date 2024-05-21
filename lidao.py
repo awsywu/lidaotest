@@ -7,7 +7,7 @@ from datetime import datetime
 plt.style.use('dark_background')
 
 # Load the lidao data from the CSV file
-lidao_data = pd.read_csv('2024-Lidao.csv', parse_dates=['date'], index_col='date')
+lidao_data = pd.read_csv('2024-Lidao.csv', parse_dates=['Date'], index_col='Date')
 
 # Fetching the QQQ data starting from the earliest date in lidao data
 start_date = lidao_data.index.min()
@@ -30,9 +30,9 @@ ax1.tick_params(axis='y', labelcolor='cyan')
 # Second axis for lidao data
 ax2 = ax1.twinx()
 ax2.set_ylabel('Lidao Indices', color='magenta')
-ax2.plot(combined_data.index, combined_data['lidao-1.0'], label='Lidao-1.0', color='magenta', marker='s', linestyle='-', markersize=6)
-ax2.plot(combined_data.index, combined_data['lidao-SPX'], label='Lidao-SPX', color='lime', marker='^', linestyle='-', markersize=6)
-ax2.plot(combined_data.index, combined_data['lidao-NASDAQ'], label='Lidao-NASDAQ', color='yellow', marker='D', linestyle='-', markersize=6)
+ax2.plot(combined_data.index, combined_data['Lidao-1.0'], label='Lidao-1.0', color='magenta', marker='s', linestyle='-', markersize=6)
+ax2.plot(combined_data.index, combined_data['Lidao-SPX'], label='Lidao-SPX', color='lime', marker='^', linestyle='-', markersize=6)
+ax2.plot(combined_data.index, combined_data['Lidao-NASDAQ'], label='Lidao-NASDAQ', color='yellow', marker='D', linestyle='-', markersize=6)
 ax2.tick_params(axis='y', labelcolor='magenta')
 
 # Adjust layout to make space for title
