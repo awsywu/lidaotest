@@ -1,3 +1,6 @@
 yfinance
 matplotlib
 pandas
+discord.py
+schedule
+python-dotenv

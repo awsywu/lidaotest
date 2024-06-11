@@ -2,4 +2,7 @@
 .DS_Store
 *.swp
 *.png
-
+**__pycache__**
+**venv**
+**.venv**
+**.env**
