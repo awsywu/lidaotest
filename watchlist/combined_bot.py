@@ -37,16 +37,18 @@ def generate_lists():
     (bullish_list, bearish_list, reduce_position_list, 
     clear_position_list, short_bottom_list, 
     J1_list, J2_list, turning_point_list,
-    break_zero_list, one_cross_three_list ) = analyzer.analyze()
+    break_zero_list, one_cross_three_list,
+    kdj_buy_list, kdj_sell_list) = analyzer.analyze()
 
-    return bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, J1_list, J2_list, turning_point_list, break_zero_list, one_cross_three_list
+    return bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, J1_list, J2_list, turning_point_list, break_zero_list, one_cross_three_list, kdj_buy_list, kdj_sell_list
 
 async def send_lists_to_channel():
     channel = bot.get_channel(WATCHLIST_CHANNEL_ID)
     (bullish_list, bearish_list, reduce_position_list,
     clear_position_list, short_bottom_list, 
     J1_list, J2_list, turning_point_list,
-    break_zero_list, one_cross_three_list ) = generate_lists()
+    break_zero_list, one_cross_three_list,
+    kdj_buy_list, kdj_sell_list ) = generate_lists()
 
     bullish_msg = "多头排列 (Bullish Alignment): " + ', '.join(bullish_list)
     bearish_msg = "强烈空头趋势 (Strong Bearish Trend): " + ', '.join(bearish_list)
@@ -58,6 +60,9 @@ async def send_lists_to_channel():
     turning_point_msg = "MA5拐点 (MA 5 Turning Point): " + ', '.join(turning_point_list)
     break_zero_msg = "破零 (Break Zero): " + ', '.join(break_zero_list)
     one_cross_three_msg = "一穿三 (One Cross Three): " + ', '.join(one_cross_three_list)
+    kdj_buy_msg = "KDJ 买点 (KDJ Buy Point): " + ', '.join(kdj_buy_list)
+    kdj_sell_msg = "KDJ 卖点 (KDJ Sell Point): " + ', '.join(kdj_sell_list)
+    
 
     await channel.send(bullish_msg)
     await channel.send(bearish_msg)
@@ -69,6 +74,8 @@ async def send_lists_to_channel():
     await channel.send(turning_point_msg)
     await channel.send(break_zero_msg)
     await channel.send(one_cross_three_msg)
+    await channel.send(kdj_buy_msg)
+    await channel.send(kdj_sell_msg)
 
 def schedule_job():
     schedule.every().monday.at("16:30").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(), bot.loop))
