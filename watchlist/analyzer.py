@@ -17,6 +17,9 @@ class StockAnalyzer:
 
         return k, d, j
 
+    def cross(self, series1, series2):
+        return series1.iloc[-1] > series2.iloc[-1] and series1.iloc[-2] <= series2.iloc[-2]
+
     def analyze_ticker(self, ticker):
         data = yf.download(ticker, period='6mo', interval='1d')
 
@@ -49,7 +52,10 @@ class StockAnalyzer:
             'death_cross': latest['MA5'] < latest['MA10'] and data['MA5'].iloc[-2] > data['MA10'].iloc[-2],
             'short_bottom': latest['Close'] > latest['MA10'] and latest['MA5'] >= data['MA5'].iloc[-2] and latest['K'] >= 50 and data['K'].iloc[-2] < 50,
             'J1': latest['J'] <= 1 and latest['MA20'] >= latest['MA60'] and latest['MA20'] >= data['MA20'].iloc[-2] and latest['MA60'] >= data['MA60'].iloc[-2] and latest['MA120'] < data['MA120'].iloc[-2],
-            'J2': latest['J'] <= 1 and latest['MA20'] >= latest['MA60'] and latest['MA20'] >= data['MA20'].iloc[-2] and latest['MA60'] >= data['MA60'].iloc[-2] and latest['MA120'] >= data['MA120'].iloc[-2]
+            'J2': latest['J'] <= 1 and latest['MA20'] >= latest['MA60'] and latest['MA20'] >= data['MA20'].iloc[-2] and latest['MA60'] >= data['MA60'].iloc[-2] and latest['MA120'] >= data['MA120'].iloc[-2],
+            'turning_point': latest['MA5'] < data['MA5'].iloc[-2] and latest['Close'] > data['Close'].iloc[-5] and data['Close'].iloc[-5] > data['Close'].iloc[-4] and data['Close'].iloc[-4] > data['Close'].iloc[-3],
+            'break_zero': latest['J'] < 0 and latest['D'] > 50 and latest['DIF'] > latest['DEA'],
+            'one_cross_three': self.cross(data['Close'], data['MA5']) and self.cross(data['Close'], data['MA10']) and self.cross(data['Close'], data['MA20'])
         }
         return results
 
@@ -61,6 +67,9 @@ class StockAnalyzer:
         short_bottom_list = []
         J1_list = []
         J2_list = []
+        turning_point_list = []
+        break_zero_list = []
+        one_cross_three_list = []
 
         for ticker in self.tickers:
             result = self.analyze_ticker(ticker)
@@ -78,8 +87,14 @@ class StockAnalyzer:
                 J1_list.append(ticker)
             if result['J2']:
                 J2_list.append(ticker)
+            if result['turning_point']:
+                turning_point_list.append(ticker)
+            if result['break_zero']:
+                break_zero_list.append(ticker)
+            if result['one_cross_three']:
+                one_cross_three_list.append(ticker)
 
-        return bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, J1_list, J2_list
+        return bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, J1_list, J2_list, turning_point_list, break_zero_list, one_cross_three_list
 
 from watchlist_parser import WatchlistParser
 
@@ -96,7 +111,12 @@ def main():
     analyzer = StockAnalyzer(tickers)
     
     # Analyze the tickers
-    bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, J1_list, J2_list = analyzer.analyze()
+    results = analyzer.analyze()
+    
+    # Unpack the results
+    (bullish_list, bearish_list, reduce_position_list, clear_position_list, 
+     short_bottom_list, J1_list, J2_list, turning_point_list, 
+     break_zero_list, one_cross_three_list) = results
     
     # Print the results
     print("多头排列 (Bullish Alignment):", bullish_list)
@@ -106,6 +126,9 @@ def main():
     print("短底成型 (Short Bottom Formation):", short_bottom_list)
     print("J1 List:", J1_list)
     print("J2 List:", J2_list)
+    print("拐点 (Turning Point):", turning_point_list)
+    print("破零 (Break Zero):", break_zero_list)
+    print("一穿三 (One Cross Three):", one_cross_three_list)
 
 if __name__ == "__main__":
     main()
