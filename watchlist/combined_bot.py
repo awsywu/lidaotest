@@ -61,7 +61,7 @@ async def send_lists_to_channel():
     break_zero_msg = "破零 (Break Zero): " + ', '.join(break_zero_list)
     one_cross_three_msg = "一穿三 (One Cross Three): " + ', '.join(one_cross_three_list)
     kdj_buy_msg = "KDJ 买点 (KDJ Buy Point): " + ', '.join(kdj_buy_list)
-    kdj_sell_msg = "KDJ 卖点 (KDJ Sell Point): " + ', '.join(kdj_sell_list)
+    kdj_sell_msg = "KDJ 超跌 (KDJ Sell Point): " + ', '.join(kdj_sell_list)
     
 
     await channel.send(bullish_msg)

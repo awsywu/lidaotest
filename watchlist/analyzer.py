@@ -148,7 +148,7 @@ def main():
     print("破零 (Break Zero):", break_zero_list)
     print("一穿三 (One Cross Three):", one_cross_three_list)
     print("KDJ 买点 (KDJ Buy Point):", kdj_buy_list)
-    print("KDJ 卖点 (KDJ Sell Point):", kdj_sell_list)
+    print("KDJ 超跌 (KDJ Sell Point):", kdj_sell_list)
 
 if __name__ == "__main__":
     main()
