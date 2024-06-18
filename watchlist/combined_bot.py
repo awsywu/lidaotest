@@ -18,18 +18,20 @@ TOKEN = os.getenv('TOKEN', None)
 
 CHART_CHANNEL_ID = 1249429941200879741
 CHAT_OUTPUT_CHANNEL_ID = 1249872056925945907
-WATCHLIST_CHANNEL_ID = 1249430358198321253
+WATCHLIST_CHANNEL_ID_1 = 1249430358198321253  # 每日关注
+WATCHLIST_CHANNEL_ID_2 = 1252364772377231473  # 观察筛选
 
 CSV_FILE = '2024-Lidao.csv'
-WATCHLIST_FILE = 'watchlist.txt'  # Replace with your actual file path
+WATCHLIST_FILE_1 = 'M_每日关注_36804.txt'  # Replace with your actual file path
+WATCHLIST_FILE_2 = 'M—观察筛选_18984.txt'  # Replace with your actual file path
 
 intents = discord.Intents.default()
 intents.message_content = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-def generate_lists():
-    parser = WatchlistParser(WATCHLIST_FILE)
+def generate_lists(watchlist_file):
+    parser = WatchlistParser(watchlist_file)
     watchlist_text = parser.read_watchlist()
     tickers = parser.extract_tickers(watchlist_text)
 
@@ -42,18 +44,18 @@ def generate_lists():
 
     return bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, J1_list, J2_list, turning_point_list, break_zero_list, one_cross_three_list, kdj_buy_list, kdj_sell_list
 
-async def send_lists_to_channel():
-    channel = bot.get_channel(WATCHLIST_CHANNEL_ID)
+async def send_lists_to_channel(channel_id, watchlist_file):
+    channel = bot.get_channel(channel_id)
     (bullish_list, bearish_list, reduce_position_list,
     clear_position_list, short_bottom_list, 
     J1_list, J2_list, turning_point_list,
     break_zero_list, one_cross_three_list,
-    kdj_buy_list, kdj_sell_list ) = generate_lists()
+    kdj_buy_list, kdj_sell_list ) = generate_lists(watchlist_file)
 
     bullish_msg = "多头排列 (Bullish Alignment): " + ', '.join(bullish_list)
     bearish_msg = "强烈空头趋势 (Strong Bearish Trend): " + ', '.join(bearish_list)
     reduce_position_msg = "减仓 (破 ma10): " + ', '.join(reduce_position_list)
-    clear_position_msg = "清仓 (破 ma20): " + ', '.join(clear_position_list)
+    clear_position_msg = ":knife: 清仓 (破 ma20): " + ', '.join(clear_position_list)
     short_bottom_msg = "短底成型 (Short Bottom Formation): " + ', '.join(short_bottom_list)
     j1_msg = "J1: " + ', '.join(J1_list)
     j2_msg = "J2: " + ', '.join(J2_list)
@@ -63,11 +65,13 @@ async def send_lists_to_channel():
     kdj_buy_msg = "KDJ 买点 (KDJ Buy Point): " + ', '.join(kdj_buy_list)
     kdj_sell_msg = "KDJ 超跌 (KDJ Sell Point): " + ', '.join(kdj_sell_list)
     
-
+    await channel.send("** :place_of_worship: 判断趋势:**")
     await channel.send(bullish_msg)
     await channel.send(bearish_msg)
+    await channel.send("\n\n**:u5272: 卖点提醒:**")
     await channel.send(reduce_position_msg)
     await channel.send(clear_position_msg)
+    await channel.send("\n\n**:rocket: :rocket: :rocket: 买点提醒:**")
     await channel.send(j1_msg)
     await channel.send(j2_msg)
     await channel.send(short_bottom_msg)
@@ -78,11 +82,17 @@ async def send_lists_to_channel():
     await channel.send(kdj_sell_msg)
 
 def schedule_job():
-    schedule.every().monday.at("16:30").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(), bot.loop))
-    schedule.every().tuesday.at("16:30").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(), bot.loop))
-    schedule.every().wednesday.at("16:30").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(), bot.loop))
-    schedule.every().thursday.at("16:30").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(), bot.loop))
-    schedule.every().friday.at("16:30").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(), bot.loop))
+    schedule.every().monday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1), bot.loop))
+    schedule.every().tuesday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1), bot.loop))
+    schedule.every().wednesday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1), bot.loop))
+    schedule.every().thursday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1), bot.loop))
+    schedule.every().friday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1), bot.loop))
+    
+    schedule.every().monday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2), bot.loop))
+    schedule.every().tuesday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2), bot.loop))
+    schedule.every().wednesday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2), bot.loop))
+    schedule.every().thursday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2), bot.loop))
+    schedule.every().friday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2), bot.loop))
 
 @bot.event
 async def on_ready():
@@ -94,7 +104,8 @@ async def on_ready():
 
 @bot.command()
 async def getdata(ctx):
-    await send_lists_to_channel()
+    await send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1)
+    await send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2)
 
 @bot.command()
 async def cat(ctx, *, message: str):
@@ -143,6 +154,11 @@ async def generate_and_send_plot(ctx):
         # Ensure that all dates are parsed correctly
         lidao_data.index = pd.to_datetime(lidao_data.index)
 
+        # Check if the Lidao-NASDAQ column needs cleaning
+        if lidao_data['Lidao-NASDAQ'].dtype == 'object':
+            lidao_data['Lidao-NASDAQ'] = lidao_data['Lidao-NASDAQ'].str.replace('[^\d.-]', '', regex=True)
+            lidao_data['Lidao-NASDAQ'] = pd.to_numeric(lidao_data['Lidao-NASDAQ'])
+
         # Fetching the QQQ data starting from the earliest date in lidao data
         start_date = lidao_data.index.min()
         qqq_data = yf.download('QQQ', start=start_date.strftime('%Y-%m-%d'))
@@ -180,15 +196,9 @@ async def generate_and_send_plot(ctx):
         plt.savefig(filename)
 
         # Send the plot to the Discord channel
-        #await ctx.send(file=discord.File(filename))
         channel = bot.get_channel(CHAT_OUTPUT_CHANNEL_ID)
-
         await channel.send(file=discord.File(filename))
         await ctx.send('Plot Generation Done.')
-
-
-        # Do not show the plot
-        # plt.show()
 
         print(f"File saved as {filename}")
     except Exception as e:

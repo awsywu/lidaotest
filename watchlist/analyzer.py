@@ -20,8 +20,9 @@ class StockAnalyzer:
     def calculate_macd(self, data, short_window=12, long_window=26, signal_window=9):
         data['EMA12'] = data['Close'].ewm(span=short_window, adjust=False).mean()
         data['EMA26'] = data['Close'].ewm(span=long_window, adjust=False).mean()
-        data['MACD'] = data['EMA12'] - data['EMA26']
-        data['Signal_Line'] = data['MACD'].ewm(span=signal_window, adjust=False).mean()
+        data['DIF'] = data['EMA12'] - data['EMA26']
+        data['DEA'] = data['DIF'].ewm(span=signal_window, adjust=False).mean()
+        data['MACD'] = 2 * (data['DIF'] - data['DEA'])
         return data
 
     def cross(self, series1, series2):
@@ -55,8 +56,8 @@ class StockAnalyzer:
         results = {
             'bullish': latest['Close'] > latest['MA10'] > latest['MA20'] > latest['MA60'],
             'bearish': latest['Close'] < latest['MA60'],
-            'below_ma10': latest['Close'] < latest['MA10'],
-            'below_ma20': latest['Close'] < latest['MA20'],
+            'below_ma10': latest['Close'] < latest['MA10'] and data['Close'].iloc[-2] > data['MA10'].iloc[-2],
+            'below_ma20': latest['Close'] < latest['MA20'] and data['Close'].iloc[-2] > data['MA20'].iloc[-2],
             'death_cross': latest['MA5'] < latest['MA10'] and data['MA5'].iloc[-2] > data['MA10'].iloc[-2],
             'short_bottom': latest['Close'] > latest['MA10'] and latest['MA5'] >= data['MA5'].iloc[-2] and latest['K'] >= 50 and data['K'].iloc[-2] < 50,
             'J1': latest['J'] <= 1 and latest['MA20'] >= latest['MA60'] and latest['MA20'] >= data['MA20'].iloc[-2] and latest['MA60'] >= data['MA60'].iloc[-2] and latest['MA120'] < data['MA120'].iloc[-2],
@@ -64,7 +65,7 @@ class StockAnalyzer:
             'turning_point': latest['MA5'] < data['MA5'].iloc[-2] and latest['Close'] > data['Close'].iloc[-5] and data['Close'].iloc[-5] > data['Close'].iloc[-4] and data['Close'].iloc[-4] > data['Close'].iloc[-3],
             'break_zero': latest['J'] < 0 and latest['D'] > 50 and latest['DIF'] > latest['DEA'],
             'one_cross_three': self.cross(data['Close'], data['MA5']) and self.cross(data['Close'], data['MA10']) and self.cross(data['Close'], data['MA20']),
-            'kdj_buy': latest['D'] > 50 and self.cross(data['MACD'], data['Signal_Line']) and data['J'].iloc[-2] <= 0 and data['J'].iloc[-1] > 0,
+            'kdj_buy': latest['D'] > 50 and self.cross(data['DIF'], data['DEA']) and data['J'].iloc[-2] <= 0 and data['J'].iloc[-1] > 0,
             'kdj_sell': latest['K'] < 10 and latest['D'] < 10
         }
         return results
@@ -118,7 +119,9 @@ from watchlist_parser import WatchlistParser
 
 def main():
     # Initialize WatchlistParser with the path to the file
-    watchlist_file = 'watchlist.txt'  # Replace with your actual file path
+    #watchlist_file = 'watchlist.txt'  # Replace with your actual file path
+    watchlist_file = 'M_每日关注_36804.txt'
+    watchlist_file = 'M—观察筛选_18984.txt'
     parser = WatchlistParser(watchlist_file)
     
     # Read and extract tickers from the watchlist
