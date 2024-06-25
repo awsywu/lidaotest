@@ -36,26 +36,30 @@ def generate_lists(watchlist_file):
     tickers = parser.extract_tickers(watchlist_text)
 
     analyzer = StockAnalyzer(tickers)
-    (bullish_list, bearish_list, reduce_position_list, 
-    clear_position_list, short_bottom_list, 
-    J1_list, J2_list, turning_point_list,
-    break_zero_list, one_cross_three_list,
-    kdj_buy_list, kdj_sell_list) = analyzer.analyze()
+    (bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, 
+     J1_list, J2_list, turning_point_list, break_zero_list, one_cross_three_list, kdj_buy_list, 
+     kdj_sell_list, e4e12_death_cross_list, e4e50_death_cross_list, e8e21_death_cross_list, 
+     rsi80_overbought_list, macd_death_cross_list, e4e12_golden_cross_list, e4e50_golden_cross_list, 
+     e8e21_golden_cross_list, rsi20_oversold_list, macd_golden_cross_list, above_ma10_list, below_ma10_list) = analyzer.analyze()
 
-    return bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, J1_list, J2_list, turning_point_list, break_zero_list, one_cross_three_list, kdj_buy_list, kdj_sell_list
+    return (bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, 
+            J1_list, J2_list, turning_point_list, break_zero_list, one_cross_three_list, kdj_buy_list, 
+            kdj_sell_list, e4e12_death_cross_list, e4e50_death_cross_list, e8e21_death_cross_list, 
+            rsi80_overbought_list, macd_death_cross_list, e4e12_golden_cross_list, e4e50_golden_cross_list, 
+            e8e21_golden_cross_list, rsi20_oversold_list, macd_golden_cross_list, above_ma10_list, below_ma10_list)
 
 async def send_lists_to_channel(channel_id, watchlist_file):
     channel = bot.get_channel(channel_id)
-    (bullish_list, bearish_list, reduce_position_list,
-    clear_position_list, short_bottom_list, 
-    J1_list, J2_list, turning_point_list,
-    break_zero_list, one_cross_three_list,
-    kdj_buy_list, kdj_sell_list ) = generate_lists(watchlist_file)
+    (bullish_list, bearish_list, reduce_position_list, clear_position_list, short_bottom_list, 
+     J1_list, J2_list, turning_point_list, break_zero_list, one_cross_three_list, kdj_buy_list, 
+     kdj_sell_list, e4e12_death_cross_list, e4e50_death_cross_list, e8e21_death_cross_list, 
+     rsi80_overbought_list, macd_death_cross_list, e4e12_golden_cross_list, e4e50_golden_cross_list, 
+     e8e21_golden_cross_list, rsi20_oversold_list, macd_golden_cross_list, above_ma10_list, below_ma10_list) = generate_lists(watchlist_file)
 
     bullish_msg = "多头排列 (Bullish Alignment): " + ', '.join(bullish_list)
     bearish_msg = "强烈空头趋势 (Strong Bearish Trend): " + ', '.join(bearish_list)
     reduce_position_msg = "减仓 (破 ma10): " + ', '.join(reduce_position_list)
-    clear_position_msg = ":knife: 清仓 (破 ma20): " + ', '.join(clear_position_list)
+    clear_position_msg = "清仓 (破 ma20): " + ', '.join(clear_position_list)
     short_bottom_msg = "短底成型 (Short Bottom Formation): " + ', '.join(short_bottom_list)
     j1_msg = "J1: " + ', '.join(J1_list)
     j2_msg = "J2: " + ', '.join(J2_list)
@@ -64,14 +68,35 @@ async def send_lists_to_channel(channel_id, watchlist_file):
     one_cross_three_msg = "一穿三 (One Cross Three): " + ', '.join(one_cross_three_list)
     kdj_buy_msg = "KDJ 买点 (KDJ Buy Point): " + ', '.join(kdj_buy_list)
     kdj_sell_msg = "KDJ 超跌 (KDJ Sell Point): " + ', '.join(kdj_sell_list)
-    
+    e4e12_death_cross_msg = "e4e12减四成 (EMA4 and EMA12 Death Cross): " + ', '.join(e4e12_death_cross_list)
+    e4e50_death_cross_msg = "e4e50清仓 (EMA4 and EMA50 Death Cross): " + ', '.join(e4e50_death_cross_list)
+    e8e21_death_cross_msg = "e8e21死叉 (EMA8 and EMA21 Death Cross): " + ', '.join(e8e21_death_cross_list)
+    rsi80_overbought_msg = "RSI80超买 (RSI >= 80): " + ', '.join(rsi80_overbought_list)
+    macd_death_cross_msg = "macd死叉 (MACD Death Cross): " + ', '.join(macd_death_cross_list)
+    e4e12_golden_cross_msg = "e4e12加四成 (EMA4 and EMA12 Golden Cross): " + ', '.join(e4e12_golden_cross_list)
+    e4e50_golden_cross_msg = "e4e50满仓 (EMA4 and EMA50 Golden Cross): " + ', '.join(e4e50_golden_cross_list)
+    e8e21_golden_cross_msg = "e8e21金叉 (EMA8 and EMA21 Golden Cross): " + ', '.join(e8e21_golden_cross_list)
+    rsi20_oversold_msg = "RSI20超卖 (RSI <= 20): " + ', '.join(rsi20_oversold_list)
+    macd_golden_cross_msg = "macd金叉 (MACD Golden Cross): " + ', '.join(macd_golden_cross_list)
+    above_ma10_msg = "ma10之上 (Close Above MA10): " + ', '.join(above_ma10_list)
+    below_ma10_msg = "小仓位ma10之下 (Close Below MA10): " + ', '.join(below_ma10_list)
+
     await channel.send("** :place_of_worship: 判断趋势:**")
     await channel.send(bullish_msg)
     await channel.send(bearish_msg)
-    await channel.send("\n\n**:u5272: 卖点提醒:**")
+    await channel.send(above_ma10_msg)
+    await channel.send(below_ma10_msg)
+    await channel.send("===============================================================")
+    await channel.send("\n\n** :place_of_worship: 卖点提醒:**")
     await channel.send(reduce_position_msg)
     await channel.send(clear_position_msg)
-    await channel.send("\n\n**:rocket: :rocket: :rocket: 买点提醒:**")
+    await channel.send(e4e12_death_cross_msg)
+    await channel.send(e4e50_death_cross_msg)
+    await channel.send(e8e21_death_cross_msg)
+    await channel.send(rsi80_overbought_msg)
+    await channel.send(macd_death_cross_msg)
+    await channel.send("===============================================================")
+    await channel.send("\n\n** :place_of_worship: 买点提醒:**")
     await channel.send(j1_msg)
     await channel.send(j2_msg)
     await channel.send(short_bottom_msg)
@@ -79,6 +104,11 @@ async def send_lists_to_channel(channel_id, watchlist_file):
     await channel.send(break_zero_msg)
     await channel.send(one_cross_three_msg)
     await channel.send(kdj_buy_msg)
+    await channel.send(e4e12_golden_cross_msg)
+    await channel.send(e4e50_golden_cross_msg)
+    await channel.send(e8e21_golden_cross_msg)
+    await channel.send(rsi20_oversold_msg)
+    await channel.send(macd_golden_cross_msg)
     await channel.send(kdj_sell_msg)
 
 def schedule_job():
