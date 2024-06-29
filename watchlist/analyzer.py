@@ -40,63 +40,93 @@ class StockAnalyzer:
         return series1.iloc[-1] < series2.iloc[-1] and series1.iloc[-2] >= series2.iloc[-2]
 
     def analyze_ticker(self, ticker):
-        data = yf.download(ticker, period='6mo', interval='1d')
+        try:
+            data = yf.download(ticker, period='6mo', interval='1d')
 
-        # Check if the latest available data is for today
-        latest_date = data.index[-1].date()
-        today_date = datetime.now().date()
+            # Check if the latest available data is for today
+            latest_date = data.index[-1].date()
+            today_date = datetime.now().date()
 
-        if latest_date < today_date:
-            print(f"Data for {ticker} is not yet updated for today ({today_date}). Latest available data is for {latest_date}.")
-        else:
-            print(f"***Data for {ticker} is updated for today ({today_date})")
+            if latest_date < today_date:
+                print(f"Data for {ticker} is not yet updated for today ({today_date}). Latest available data is for {latest_date}.")
+            else:
+                print(f"***Data for {ticker} is updated for today ({today_date})")
 
-        data['MA5'] = data['Close'].rolling(window=5).mean()
-        data['MA10'] = data['Close'].rolling(window=10).mean()
-        data['MA20'] = data['Close'].rolling(window=20).mean()
-        data['MA30'] = data['Close'].rolling(window=30).mean()
-        data['MA60'] = data['Close'].rolling(window=60).mean()
-        data['MA120'] = data['Close'].rolling(window=120).mean()
-        data['MA250'] = data['Close'].rolling(window=250).mean()
-        data['MA500'] = data['Close'].rolling(window=500).mean()
-        data['MA1000'] = data['Close'].rolling(window=1000).mean()
-        data['EMA4'] = data['Close'].ewm(span=4, adjust=False).mean()
-        data['EMA8'] = data['Close'].ewm(span=8, adjust=False).mean()
-        data['EMA12'] = data['Close'].ewm(span=12, adjust=False).mean()
-        data['EMA21'] = data['Close'].ewm(span=21, adjust=False).mean()
-        data['EMA50'] = data['Close'].ewm(span=50, adjust=False).mean()
-        data['K'], data['D'], data['J'] = self.calculate_kdj(data)
-        data = self.calculate_macd(data)
-        data['RSI'] = self.calculate_rsi(data)
+            data['MA5'] = data['Close'].rolling(window=5).mean()
+            data['MA10'] = data['Close'].rolling(window=10).mean()
+            data['MA20'] = data['Close'].rolling(window=20).mean()
+            data['MA30'] = data['Close'].rolling(window=30).mean()
+            data['MA60'] = data['Close'].rolling(window=60).mean()
+            data['MA120'] = data['Close'].rolling(window=120).mean()
+            data['MA250'] = data['Close'].rolling(window=250).mean()
+            data['MA500'] = data['Close'].rolling(window=500).mean()
+            data['MA1000'] = data['Close'].rolling(window=1000).mean()
+            data['EMA4'] = data['Close'].ewm(span=4, adjust=False).mean()
+            data['EMA8'] = data['Close'].ewm(span=8, adjust=False).mean()
+            data['EMA12'] = data['Close'].ewm(span=12, adjust=False).mean()
+            data['EMA21'] = data['Close'].ewm(span=21, adjust=False).mean()
+            data['EMA50'] = data['Close'].ewm(span=50, adjust=False).mean()
+            data['K'], data['D'], data['J'] = self.calculate_kdj(data)
+            data = self.calculate_macd(data)
+            data['RSI'] = self.calculate_rsi(data)
 
-        latest = data.iloc[-1]
-        results = {
-            'bullish': latest['Close'] > latest['MA10'] > latest['MA20'] > latest['MA60'],
-            'bearish': latest['Close'] < latest['MA60'],
-            'below_ma10': latest['Close'] < latest['MA10'] and data['Close'].iloc[-2] > data['MA10'].iloc[-2],
-            'below_ma20': latest['Close'] < latest['MA20'] and data['Close'].iloc[-2] > data['MA20'].iloc[-2],
-            'death_cross': latest['MA5'] < latest['MA10'] and data['MA5'].iloc[-2] > data['MA10'].iloc[-2],
-            'short_bottom': latest['Close'] > latest['MA10'] and latest['MA5'] >= data['MA5'].iloc[-2] and latest['K'] >= 50 and data['K'].iloc[-2] < 50,
-            'J1': latest['J'] <= 1 and latest['MA20'] >= latest['MA60'] and latest['MA20'] >= data['MA20'].iloc[-2] and latest['MA60'] >= data['MA60'].iloc[-2] and latest['MA120'] < data['MA120'].iloc[-2],
-            'J2': latest['J'] <= 1 and latest['MA20'] >= latest['MA60'] and latest['MA20'] >= data['MA20'].iloc[-2] and latest['MA60'] >= data['MA60'].iloc[-2] and latest['MA120'] >= data['MA120'].iloc[-2],
-            'turning_point': latest['MA5'] < data['MA5'].iloc[-2] and latest['Close'] > data['Close'].iloc[-5] and data['Close'].iloc[-5] > data['Close'].iloc[-4] and data['Close'].iloc[-4] > data['Close'].iloc[-3],
-            'break_zero': latest['J'] < 0 and latest['D'] > 50 and latest['DIF'] > latest['DEA'],
-            'one_cross_three': self.cross(data['Close'], data['MA5']) and self.cross(data['Close'], data['MA10']) and self.cross(data['Close'], data['MA20']),
-            'kdj_buy': latest['D'] > 50 and self.cross(data['DIF'], data['DEA']) and data['J'].iloc[-2] <= 0 and data['J'].iloc[-1] > 0,
-            'kdj_sell': latest['K'] < 10 and latest['D'] < 10,
-            'e4e12_death_cross': self.cross_down(data['EMA4'], data['EMA12']),
-            'e4e50_death_cross': self.cross_down(data['EMA4'], data['EMA50']),
-            'e8e21_death_cross': self.cross_down(data['EMA8'], data['EMA21']),
-            'rsi80_overbought': latest['RSI'] >= 80 and data['RSI'].iloc[-2] < 80,
-            'macd_death_cross': self.cross_down(data['DIF'], data['DEA']) and data['DIF'].iloc[-2] > data['DEA'].iloc[-2],
-            'e4e12_golden_cross': self.cross(data['EMA4'], data['EMA12']),
-            'e4e50_golden_cross': self.cross(data['EMA4'], data['EMA50']),
-            'e8e21_golden_cross': self.cross(data['EMA8'], data['EMA21']),
-            'rsi20_oversold': latest['RSI'] <= 20 and data['RSI'].iloc[-2] > 20,
-            'macd_golden_cross': self.cross(data['DIF'], data['DEA']) and data['DIF'].iloc[-2] < data['DEA'].iloc[-2],
-            'above_ma10': latest['Close'] > latest['MA10'] and data['Close'].iloc[-2] <= data['MA10'].iloc[-2],
-            'below_ma10_first': latest['Close'] < latest['MA10'] and data['Close'].iloc[-2] >= data['MA10'].iloc[-2]
-        }
+            latest = data.iloc[-1]
+            results = {
+                'bullish': latest['Close'] > latest['MA10'] > latest['MA20'] > latest['MA60'],
+                'bearish': latest['Close'] < latest['MA60'],
+                'below_ma10': latest['Close'] < latest['MA10'] and data['Close'].iloc[-2] > data['MA10'].iloc[-2],
+                'below_ma20': latest['Close'] < latest['MA20'] and data['Close'].iloc[-2] > data['MA20'].iloc[-2],
+                'death_cross': latest['MA5'] < latest['MA10'] and data['MA5'].iloc[-2] > data['MA10'].iloc[-2],
+                'short_bottom': latest['Close'] > latest['MA10'] and latest['MA5'] >= data['MA5'].iloc[-2] and latest['K'] >= 50 and data['K'].iloc[-2] < 50,
+                'J1': latest['J'] <= 1 and latest['MA20'] >= latest['MA60'] and latest['MA20'] >= data['MA20'].iloc[-2] and latest['MA60'] >= data['MA60'].iloc[-2] and latest['MA120'] < data['MA120'].iloc[-2],
+                'J2': latest['J'] <= 1 and latest['MA20'] >= latest['MA60'] and latest['MA20'] >= data['MA20'].iloc[-2] and latest['MA60'] >= data['MA60'].iloc[-2] and latest['MA120'] >= data['MA120'].iloc[-2],
+                'turning_point': latest['MA5'] < data['MA5'].iloc[-2] and latest['Close'] > data['Close'].iloc[-5] and data['Close'].iloc[-5] > data['Close'].iloc[-4] and data['Close'].iloc[-4] > data['Close'].iloc[-3],
+                'break_zero': latest['J'] < 0 and latest['D'] > 50 and latest['DIF'] > latest['DEA'],
+                'one_cross_three': self.cross(data['Close'], data['MA5']) and self.cross(data['Close'], data['MA10']) and self.cross(data['Close'], data['MA20']),
+                'kdj_buy': latest['D'] > 50 and self.cross(data['DIF'], data['DEA']) and data['J'].iloc[-2] <= 0 and data['J'].iloc[-1] > 0,
+                'kdj_sell': latest['K'] < 10 and latest['D'] < 10,
+                'e4e12_death_cross': self.cross_down(data['EMA4'], data['EMA12']),
+                'e4e50_death_cross': self.cross_down(data['EMA4'], data['EMA50']),
+                'e8e21_death_cross': self.cross_down(data['EMA8'], data['EMA21']),
+                'rsi80_overbought': latest['RSI'] >= 80 and data['RSI'].iloc[-2] < 80,
+                'macd_death_cross': self.cross_down(data['DIF'], data['DEA']) and data['DIF'].iloc[-2] > data['DEA'].iloc[-2],
+                'e4e12_golden_cross': self.cross(data['EMA4'], data['EMA12']),
+                'e4e50_golden_cross': self.cross(data['EMA4'], data['EMA50']),
+                'e8e21_golden_cross': self.cross(data['EMA8'], data['EMA21']),
+                'rsi20_oversold': latest['RSI'] <= 20 and data['RSI'].iloc[-2] > 20,
+                'macd_golden_cross': self.cross(data['DIF'], data['DEA']) and data['DIF'].iloc[-2] < data['DEA'].iloc[-2],
+                'above_ma10': latest['Close'] > latest['MA10'] and data['Close'].iloc[-2] <= data['MA10'].iloc[-2],
+                'below_ma10_first': latest['Close'] < latest['MA10'] and data['Close'].iloc[-2] >= data['MA10'].iloc[-2]
+            }
+        except Exception as e:
+            print(f"Error analyzing {ticker}: {e}")
+            results = {
+                'bullish': False,
+                'bearish': False,
+                'below_ma10': False,
+                'below_ma20': False,
+                'death_cross': False,
+                'short_bottom': False,
+                'J1': False,
+                'J2': False,
+                'turning_point': False,
+                'break_zero': False,
+                'one_cross_three': False,
+                'kdj_buy': False,
+                'kdj_sell': False,
+                'e4e12_death_cross': False,
+                'e4e50_death_cross': False,
+                'e8e21_death_cross': False,
+                'rsi80_overbought': False,
+                'macd_death_cross': False,
+                'e4e12_golden_cross': False,
+                'e4e50_golden_cross': False,
+                'e8e21_golden_cross': False,
+                'rsi20_oversold': False,
+                'macd_golden_cross': False,
+                'above_ma10': False,
+                'below_ma10_first': False
+            }
         return results
 
     def analyze(self):
@@ -184,29 +214,67 @@ class StockAnalyzer:
                 e4e12_golden_cross_list, e4e50_golden_cross_list, e8e21_golden_cross_list,
                 rsi20_oversold_list, macd_golden_cross_list, above_ma10_list, below_ma10_list)
 
+    def analyze_longterm(self):
+        weekly_above_ema13_list = []
+        quarterly_above_ma5_list = []
+        weekly_below_ema13_list = []
+        quarterly_below_ma5_list = []
+
+        for ticker in self.tickers:
+            try:
+                data_weekly = yf.download(ticker, period='5y', interval='1wk')
+                data_quarterly = yf.download(ticker, period='5y', interval='3mo')
+
+                data_weekly['EMA13'] = data_weekly['Close'].ewm(span=13, adjust=False).mean()
+                data_quarterly['MA5'] = data_quarterly['Close'].rolling(window=5).mean()
+
+                # Weekly price above EMA13 first time
+                if data_weekly['Close'].iloc[-1] > data_weekly['EMA13'].iloc[-1] and data_weekly['Close'].iloc[-2] <= data_weekly['EMA13'].iloc[-2]:
+                    weekly_above_ema13_list.append(ticker)
+
+                # Quarterly price above MA5 first time
+                if data_quarterly['Close'].iloc[-1] > data_quarterly['MA5'].iloc[-1] and data_quarterly['Close'].iloc[-2] <= data_quarterly['MA5'].iloc[-2]:
+                    quarterly_above_ma5_list.append(ticker)
+
+                # Weekly price below EMA13 first time
+                if data_weekly['Close'].iloc[-1] < data_weekly['EMA13'].iloc[-1] and data_weekly['Close'].iloc[-2] >= data_weekly['EMA13'].iloc[-2]:
+                    weekly_below_ema13_list.append(ticker)
+
+                # Quarterly price below MA5 first time
+                if data_quarterly['Close'].iloc[-1] < data_quarterly['MA5'].iloc[-1] and data_quarterly['Close'].iloc[-2] >= data_quarterly['MA5'].iloc[-2]:
+                    quarterly_below_ma5_list.append(ticker)
+            except Exception as e:
+                print(f"Error analyzing {ticker} long-term: {e}... skipping")
+
+        return (weekly_above_ema13_list, quarterly_above_ma5_list, weekly_below_ema13_list, quarterly_below_ma5_list)
+
 from watchlist_parser import WatchlistParser
 
 def main():
-    watchlist_file_1 = 'M_每日关注_36804.txt'
-    watchlist_file_2 = 'M—观察筛选_18984.txt'
+    watchlist_file_1 = '每日关注_b632d.txt'
+    watchlist_file_2 = '观察筛选_5bee8.txt'
     
     parser = WatchlistParser(watchlist_file_1)
     watchlist_text = parser.read_watchlist()
     tickers = parser.extract_tickers(watchlist_text)
     analyzer = StockAnalyzer(tickers)
     results_1 = analyzer.analyze()
+    longterm_results_1 = analyzer.analyze_longterm()
 
     parser = WatchlistParser(watchlist_file_2)
     watchlist_text = parser.read_watchlist()
     tickers = parser.extract_tickers(watchlist_text)
     analyzer = StockAnalyzer(tickers)
     results_2 = analyzer.analyze()
+    longterm_results_2 = analyzer.analyze_longterm()
 
     print("Results for watchlist 1:")
     unpack_results(results_1)
+    unpack_longterm_results(longterm_results_1)
 
     print("\nResults for watchlist 2:")
     unpack_results(results_2)
+    unpack_longterm_results(longterm_results_2)
 
 def unpack_results(results):
     (bullish_list, bearish_list, reduce_position_list, clear_position_list, 
@@ -241,6 +309,14 @@ def unpack_results(results):
     print("macd金叉 (MACD Golden Cross):", macd_golden_cross_list)
     print("ma10之上 (Close Above MA10):", above_ma10_list)
     print("ma10之下 (Close Below MA10):", below_ma10_list)
+
+def unpack_longterm_results(results):
+    (weekly_above_ema13_list, quarterly_above_ma5_list, weekly_below_ema13_list, quarterly_below_ma5_list) = results
+
+    print("周线上穿EMA13 (Weekly Close Above EMA13):", weekly_above_ema13_list)
+    print("季度线上穿MA5 (Quarterly Close Above MA5):", quarterly_above_ma5_list)
+    print("周线下穿EMA13 (Weekly Close Below EMA13):", weekly_below_ema13_list)
+    print("季度线下穿MA5 (Quarterly Close Below MA5):", quarterly_below_ma5_list)
 
 if __name__ == "__main__":
     main()

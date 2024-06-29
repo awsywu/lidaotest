@@ -20,10 +20,11 @@ CHART_CHANNEL_ID = 1249429941200879741
 CHAT_OUTPUT_CHANNEL_ID = 1249872056925945907
 WATCHLIST_CHANNEL_ID_1 = 1249430358198321253  # 每日关注
 WATCHLIST_CHANNEL_ID_2 = 1252364772377231473  # 观察筛选
+WATCHLIST_CHANNEL_ID_3 = 1256436429991710761  # 长期关注观察
 
 CSV_FILE = '2024-Lidao.csv'
-WATCHLIST_FILE_1 = 'M_每日关注_36804.txt'  # Replace with your actual file path
-WATCHLIST_FILE_2 = 'M—观察筛选_18984.txt'  # Replace with your actual file path
+WATCHLIST_FILE_1 = '每日关注_b632d.txt'  # Replace with your actual file path
+WATCHLIST_FILE_2 = '观察筛选_5bee8.txt'  # Replace with your actual file path
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -111,6 +112,31 @@ async def send_lists_to_channel(channel_id, watchlist_file):
     await channel.send(macd_golden_cross_msg)
     await channel.send(kdj_sell_msg)
 
+def generate_longterm_lists(watchlist_file):
+    parser = WatchlistParser(watchlist_file)
+    watchlist_text = parser.read_watchlist()
+    tickers = parser.extract_tickers(watchlist_text)
+
+    analyzer = StockAnalyzer(tickers)
+    (weekly_above_ema13_list, quarterly_above_ma5_list, weekly_below_ema13_list, quarterly_below_ma5_list) = analyzer.analyze_longterm()
+
+    return (weekly_above_ema13_list, quarterly_above_ma5_list, weekly_below_ema13_list, quarterly_below_ma5_list)
+
+async def send_longterm_lists_to_channel(channel_id, watchlist_file, watchlist_name):
+    channel = bot.get_channel(channel_id)
+    (weekly_above_ema13_list, quarterly_above_ma5_list, weekly_below_ema13_list, quarterly_below_ma5_list) = generate_longterm_lists(watchlist_file)
+
+    weekly_above_ema13_msg = f"周线上穿EMA13 (Weekly Close Above EMA13): " + ', '.join(weekly_above_ema13_list)
+    quarterly_above_ma5_msg = f"季度线上穿MA5 (Quarterly Close Above MA5): " + ', '.join(quarterly_above_ma5_list)
+    weekly_below_ema13_msg = f"周线下穿EMA13 (Weekly Close Below EMA13): " + ', '.join(weekly_below_ema13_list)
+    quarterly_below_ma5_msg = f"季度线下穿MA5 (Quarterly Close Below MA5): " + ', '.join(quarterly_below_ma5_list)
+
+    await channel.send(f"** :place_of_worship: ========== {watchlist_name} = 长期趋势 =======**")
+    await channel.send(weekly_above_ema13_msg)
+    await channel.send(quarterly_above_ma5_msg)
+    await channel.send(weekly_below_ema13_msg)
+    await channel.send(quarterly_below_ma5_msg)
+
 def schedule_job():
     schedule.every().monday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1), bot.loop))
     schedule.every().tuesday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1), bot.loop))
@@ -124,6 +150,9 @@ def schedule_job():
     schedule.every().thursday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2), bot.loop))
     schedule.every().friday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2), bot.loop))
 
+    schedule.every().friday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_longterm_lists_to_channel(WATCHLIST_CHANNEL_ID_3, WATCHLIST_FILE_1, "每日关注"), bot.loop))
+    schedule.every().friday.at("16:30", "America/New_York").do(lambda: asyncio.run_coroutine_threadsafe(send_longterm_lists_to_channel(WATCHLIST_CHANNEL_ID_3, WATCHLIST_FILE_2, "观察筛选"), bot.loop))
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name} ({bot.user.id})')
@@ -136,6 +165,11 @@ async def on_ready():
 async def getdata(ctx):
     await send_lists_to_channel(WATCHLIST_CHANNEL_ID_1, WATCHLIST_FILE_1)
     await send_lists_to_channel(WATCHLIST_CHANNEL_ID_2, WATCHLIST_FILE_2)
+
+@bot.command()
+async def getlongterm(ctx):
+    await send_longterm_lists_to_channel(WATCHLIST_CHANNEL_ID_3, WATCHLIST_FILE_1, "每日关注")
+    await send_longterm_lists_to_channel(WATCHLIST_CHANNEL_ID_3, WATCHLIST_FILE_2, "观察筛选")
 
 @bot.command()
 async def cat(ctx, *, message: str):
